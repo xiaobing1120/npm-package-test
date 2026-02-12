@@ -30,7 +30,7 @@ export default defineConfig(async ({ command, mode }) => {
       react()
     ],
     server: {
-      port: 8000,
+      port: 5173,
       open: true,
       proxy: {
         // 接口转发

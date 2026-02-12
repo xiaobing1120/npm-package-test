@@ -67,6 +67,18 @@ const Layouts: React.FC = () => {
                 },
               ]
             },
+            {
+              path: '/npm-package',
+              label: 'npm包',
+              icon: 'CrownFilled',
+              children: [
+                {
+                  path: '/antv-x6',
+                  label: '@antv-x6',
+                  icon: 'TabletFilled',
+                },
+              ]
+            },
           ])
         }, 500);
       })

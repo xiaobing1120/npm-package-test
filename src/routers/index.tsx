@@ -15,6 +15,7 @@ const Result = React.lazy(() => import('../pages/Result'))
 const Test1 = React.lazy(() => import('../pages/Test1'))
 const Test2 = React.lazy(() => import('../pages/Test2'))
 const Login = React.lazy(() => import('../pages/Login'))
+const AntvX6 = React.lazy(() => import('../pages/npm-package/Antv-x6'))
 
 const routersIcon: any = {}
 
@@ -62,6 +63,11 @@ const routers = [
         path: '/test2',
         element: <Test2 />,
         icon: <img src={ReactIcon} width={14} height={14} />
+      },
+      {
+        path: '/antv-x6',
+        element: <AntvX6 />,
+        icon:<TabletFilled />
       }
     ]
   },
