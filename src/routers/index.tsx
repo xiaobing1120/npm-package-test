@@ -67,7 +67,7 @@ const routers = [
       {
         path: '/antv-x6',
         element: <AntvX6 />,
-        icon:<TabletFilled />
+        icon: <TabletFilled />
       }
     ]
   },
