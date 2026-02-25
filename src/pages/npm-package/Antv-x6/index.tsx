@@ -2,6 +2,7 @@ import {useEffect, useRef} from 'react'
 import {Cell, Graph, Keyboard, Node, Path, Selection} from '@antv/x6'
 import Hierarchy from '@antv/hierarchy'
 import insertCss from 'insert-css'
+import styles from './index.module.less'
 
 interface MindMapData {
   id: string
@@ -9,6 +10,8 @@ interface MindMapData {
   label: string
   width: number
   height: number
+  description?: string
+  level?: number | null
   children?: MindMapData[]
 }
 
@@ -30,6 +33,8 @@ function App() {
     label: '中心主题',
     width: 160,
     height: 50,
+    description: '123456',
+    level: 1,
     children: [
       {
         id: '1-1',
@@ -37,6 +42,7 @@ function App() {
         label: '分支主题1',
         width: 100,
         height: 40,
+        description: '123456',
         children: [
           {
             id: '1-1-1',
@@ -44,6 +50,7 @@ function App() {
             label: '子主题1',
             width: 60,
             height: 30,
+            description: '123456',
           },
           {
             id: '1-1-2',
@@ -51,6 +58,7 @@ function App() {
             label: '子主题2',
             width: 60,
             height: 30,
+            description: '123456',
           },
         ],
       },
@@ -64,6 +72,7 @@ function App() {
     ],
   }
 
+  // 渲染展示
   const render = () => {
     const result: any = Hierarchy.mindmap(data, {
       direction: 'H',
@@ -96,6 +105,8 @@ function App() {
             width: data.width,
             height: data.height,
             label: data.label,
+            description: data.description || '',
+            level: null,
             type: data.type,
           }),
         )
@@ -132,10 +143,7 @@ function App() {
     graph.centerContent()
   }
 
-  const findItem = (
-    obj: MindMapData,
-    id: string,
-  ): {
+  const findItem = (obj: MindMapData, id: string,): {
     parent: MindMapData | null
     node: MindMapData | null
   } | null => {
@@ -160,6 +168,7 @@ function App() {
     return null
   }
 
+  // 添加子节点
   const addChildNode = (id: string, type: any) => {
     const res = findItem(data, id)
     const dataItem = res?.node
@@ -171,6 +180,8 @@ function App() {
           id: `${id}-${length + 1}`,
           type: 'topic-branch',
           label: `分支主题${length + 1}`,
+          description: '',
+          level: null,
           width: 100,
           height: 40,
         }
@@ -179,6 +190,8 @@ function App() {
           id: `${id}-${length + 1}`,
           type: 'topic-branch',
           label: `子主题${length + 1}`,
+          description: '',
+          level: null,
           width: 60,
           height: 30,
         }
@@ -195,6 +208,7 @@ function App() {
     return null
   }
 
+  // 删除节点
   const removeNode = (id: string) => {
     const res = findItem(data, id)
     const dataItem = res?.parent
@@ -225,6 +239,14 @@ function App() {
             tagName: 'text',
             selector: 'label',
           },
+          {
+            tagName: 'text',
+            selector: 'description',  // 描述文本
+          },
+          {
+            tagName: 'text',
+            selector: 'level',  // 级别
+          }
         ],
         attrs: {
           body: {
@@ -236,7 +258,7 @@ function App() {
           },
           img: {
             ref: 'body',
-            refX: '100%',
+            refX: '102%',
             refY: '50%',
             refY2: -8,
             width: 16,
@@ -249,13 +271,34 @@ function App() {
           label: {
             fontSize: 14,
             fill: '#262626',
+            refY: 10,  // 调整主标题位置
           },
+          description: {
+            fontSize: 10,
+            fill: '#666666',
+            refY: 30,  // 描述文本位置
+            textWrap: {
+              width: -10,
+              height: 30,
+              ellipsis: true,
+            }
+          },
+          level: {
+            fontSize: 10,
+            fill: '#666666',
+            refY: 30,  // 描述文本位置
+            textWrap: {
+              width: -10,
+              height: 30,
+              ellipsis: true,
+            }
+          }
         },
       },
       true,
     )
 
-// 子主题
+    // 子主题
     Graph.registerNode(
       'topic-branch',
       {
@@ -290,12 +333,32 @@ function App() {
             strokeWidth: 2,
             d: 'M 0 15 L 60 15',
           },
+          description: {
+            fontSize: 8,
+            fill: '#888888',
+            refY: 22,  // 描述文本位置
+            textWrap: {
+              width: -5,
+              height: 20,
+              ellipsis: true,
+            }
+          },
+          level: {
+            fontSize: 8,
+            fill: '#888888',
+            refY: 22,  // 描述文本位置
+            textWrap: {
+              width: -5,
+              height: 20,
+              ellipsis: true,
+            }
+          }
         },
       },
       true,
     )
 
-// 连接器
+    // 连接器
     Graph.registerConnector(
       'mindmap',
       (sourcePoint, targetPoint, routerPoints, options) => {
@@ -313,7 +376,7 @@ function App() {
       true,
     )
 
-// 边
+    // 边
     Graph.registerEdge(
       'mindmap-edge',
       {
@@ -334,7 +397,7 @@ function App() {
     )
 
     graph = new Graph({
-      container: document.getElementById('container')!,
+      container: containerRef.current as any,
       connecting: {
         connectionPoint: 'anchor',
       },
@@ -343,13 +406,17 @@ function App() {
     graph.use(new Selection())
     graph.use(new Keyboard())
 
+    // 添加子节点事件
     graph.on('add:topic', ({ node }: { node: Node }) => {
       const { id } = node
       const type = node.prop('type')
       if (addChildNode(id, type)) {
         render()
       }
+      return false
     })
+
+    // 删除节点事件
     graph.bindKey(['backspace', 'delete'], () => {
       const selectedNodes = graph.getSelectedCells().filter((item: any) => item.isNode())
       if (selectedNodes.length) {
@@ -374,7 +441,7 @@ function App() {
 
     render()
 
-    insertCss(`
+    /*insertCss(`
       .topic-image {
         visibility: hidden;
         cursor: pointer;
@@ -385,19 +452,20 @@ function App() {
       .x6-node-selected rect {
         stroke-width: 2px;
       }
-    `)
+    `)*/
   }, []);
 
   return (
-    <div className="app-container" style={{ width: '100%', height: '100%' }}>
+    <div className={styles.appContainer}>
       <div className="toolbar">
         <button>➕ 添加节点 (Tab)</button>
         <button>🗑️ 删除节点 (Del)</button>
         <button>📥 导出 JSON</button>
         <span className="status">已选择: {1} 个</span>
       </div>
-      {/*ref={containerRef} className="graph-container"*/}
-      <div id='container' style={{ width: '100%', height: '100%' }} />
+      <div className="content">
+        <div ref={containerRef}/>
+      </div>
     </div>
   );
 }

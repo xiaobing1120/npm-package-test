@@ -1,7 +1,35 @@
 
-.content{
+.appContainer{
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: red;
+  display: flex;
+  flex-direction: column;
+  :global{
+    .topic-image{
+      cursor: pointer;
+    }
+    .x6-node-selected rect {
+      stroke-width: 2px;
+    }
+    .x6-cell text {
+      &::after{
+        display: block;
+        content: '123';
+        font-size: 18px;
+        fill: red;
+      }
+    }
+
+    .toolbar{
+      height: 48px;
+    }
+    .content{
+      flex: 1;
+      >div{
+        width: 100%;
+        height: 100%;
+      }
+    }
+  }
 }
