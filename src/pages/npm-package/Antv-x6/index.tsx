@@ -1,17 +1,19 @@
-import {useEffect, useRef} from 'react'
+import {useEffect, useRef, useState} from 'react'
 import {Cell, Graph, Keyboard, Node, Path, Selection} from '@antv/x6'
+import { register }  from '@antv/x6-react-shape'
 import Hierarchy from '@antv/hierarchy'
 import insertCss from 'insert-css'
+import ChildNode from './ChildNode'
 import styles from './index.module.less'
 
 interface MindMapData {
   id: string
   type: 'topic' | 'topic-branch'
   label: string
-  width: number
-  height: number
-  description?: string
-  level?: number | null
+  width?: number
+  height?: number
+  desc?: string
+  level?: string
   children?: MindMapData[]
 }
 
@@ -23,54 +25,64 @@ interface HierarchyResult {
   children?: HierarchyResult[]
 }
 
+const datas: MindMapData = {
+  id: '1',
+  type: 'topic',
+  label: '中心主题',
+  // width: 160,
+  // height: 50,
+  children: [
+    {
+      id: '1-1',
+      type: 'topic-branch',
+      label: '分支主题1',
+      // width: 100,
+      // height: 40,
+      desc: '123456',
+      children: [
+        {
+          id: '1-1-1',
+          type: 'topic-branch',
+          label: '子主题1',
+          // width: 60,
+          // height: 30,
+          desc: '123456',
+        },
+        {
+          id: '1-1-2',
+          type: 'topic-branch',
+          label: '子主题2',
+          // width: 60,
+          // height: 30,
+          desc: '123456',
+        },
+      ],
+    },
+    {
+      id: '1-2',
+      type: 'topic-branch',
+      label: '分支主题2',
+      // width: 100,
+      // height: 40,
+    },
+  ],
+}
 
 function App() {
   const containerRef = useRef<HTMLDivElement>(null)
   let graph: any = null
-  const data: MindMapData = {
-    id: '1',
-    type: 'topic',
-    label: '中心主题',
-    width: 160,
-    height: 50,
-    description: '123456',
-    level: 1,
-    children: [
-      {
-        id: '1-1',
-        type: 'topic-branch',
-        label: '分支主题1',
-        width: 100,
-        height: 40,
-        description: '123456',
-        children: [
-          {
-            id: '1-1-1',
-            type: 'topic-branch',
-            label: '子主题1',
-            width: 60,
-            height: 30,
-            description: '123456',
-          },
-          {
-            id: '1-1-2',
-            type: 'topic-branch',
-            label: '子主题2',
-            width: 60,
-            height: 30,
-            description: '123456',
-          },
-        ],
-      },
-      {
-        id: '1-2',
-        type: 'topic-branch',
-        label: '分支主题2',
-        width: 100,
-        height: 40,
-      },
-    ],
-  }
+  const [data, setData] = useState<MindMapData>(datas)
+
+  const calculateTextWidth = (text: string, fontSize = 12) => {
+    /*const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    // console.log('text', text, fontSize)
+    if (ctx) {
+      ctx.font = `${fontSize}px`; // Size
+      return ctx.measureText(text).width;
+    }*/
+    return (text || '').length * fontSize; // 简单估算
+  };
 
   // 渲染展示
   const render = () => {
@@ -99,15 +111,22 @@ function App() {
         cells.push(
           graph.createNode({
             id: data.id,
-            shape: 'topic',
+            // shape: 'topic',
+            shape: 'react-node',
             x: hierarchyItem.x,
             y: hierarchyItem.y,
             width: data.width,
             height: data.height,
             label: data.label,
-            description: data.description || '',
-            level: null,
+            desc: data.desc || '',
+            level: '',
             type: data.type,
+            data: {
+              label: data.label,
+              desc: data.desc,
+              level: data.level,
+              type: data.type,
+            },
           }),
         )
         if (children) {
@@ -180,8 +199,8 @@ function App() {
           id: `${id}-${length + 1}`,
           type: 'topic-branch',
           label: `分支主题${length + 1}`,
-          description: '',
-          level: null,
+          desc: '',
+          level: '',
           width: 100,
           height: 40,
         }
@@ -190,8 +209,8 @@ function App() {
           id: `${id}-${length + 1}`,
           type: 'topic-branch',
           label: `子主题${length + 1}`,
-          description: '',
-          level: null,
+          desc: '',
+          level: '',
           width: 60,
           height: 30,
         }
@@ -221,6 +240,16 @@ function App() {
   }
 
   useEffect(() => {
+    register({
+      shape: 'react-node',
+     /* width: 160,
+      height: 90,*/
+      component: ({ node }: { node: any }) => {
+        const { label, desc, level, type } = node.getData()
+        console.log('type', type)
+        return <ChildNode label={label} desc={desc} level={level} />
+      }
+    })
     // 中心主题或分支主题
     Graph.registerNode(
       'topic',
@@ -241,7 +270,7 @@ function App() {
           },
           {
             tagName: 'text',
-            selector: 'description',  // 描述文本
+            selector: 'desc',  // 描述文本
           },
           {
             tagName: 'text',
@@ -273,7 +302,7 @@ function App() {
             fill: '#262626',
             refY: 10,  // 调整主标题位置
           },
-          description: {
+          desc: {
             fontSize: 10,
             fill: '#666666',
             refY: 30,  // 描述文本位置
@@ -333,7 +362,7 @@ function App() {
             strokeWidth: 2,
             d: 'M 0 15 L 60 15',
           },
-          description: {
+          desc: {
             fontSize: 8,
             fill: '#888888',
             refY: 22,  // 描述文本位置
@@ -401,6 +430,10 @@ function App() {
       connecting: {
         connectionPoint: 'anchor',
       },
+      interacting: {
+        nodeMovable: true,  // 允许节点移动
+        edgeLabelMovable: false,
+      }
     });
 
     graph.use(new Selection())
